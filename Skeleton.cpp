@@ -177,11 +177,11 @@ public:
         float fov = 45 * M_PI / 180;
         camera.set(eye, lookat, vup, fov);
 
-        La = vec3(0.0f, 0.0f, 0.0f);
-        vec3 lightDirection(1, 1, 1), Le(2, 2, 2);
+        La = vec3(0.2f, 0.2f, 0.2f);
+        vec3 lightDirection(-1, 1, 1), Le(2, 2, 2);
         lights.push_back(new Light(lightDirection, Le));
 
-        vec3 kd(0.2f, 0.2f, 0.2f), ks(2, 2, 2);
+        vec3 kd(0.5f, 0.5f, 0.5f), ks(2, 2, 2);
         Material* material = new Material(kd, ks, 50);
 
         //TODO create a cube with 12 triangles (2 per side) and add it to the list of objects (objects.push_back(...))
@@ -193,7 +193,6 @@ public:
         vec3 f = vec3(1.0f, 0, 1.0f);       //6
         vec3 g = vec3(1.0f, 1.0f, 0);       //7
         vec3 h = vec3(1.0f, 1.0f, 1.0f);    //8
-
         objects.push_back(new Triangle(a, g, e, material));
         objects.push_back(new Triangle(a, c, g, material));
         objects.push_back(new Triangle(a, d, c, material));
@@ -220,16 +219,46 @@ public:
     }
 
     Hit firstIntersect(Ray ray) {
-        std::vector<Hit> hits;
         Hit bestHit;
         for (Intersectable * object : objects) {
             Hit hit = object->intersect(ray); //  hit.t < 0 if no intersection
-            hits.push_back(hit);
             if (hit.t > 0 && (bestHit.t < 0 || hit.t < bestHit.t))
                 bestHit = hit;
         }
-        if (dot(ray.dir, bestHit.normal) > 0) bestHit.normal = bestHit.normal * (-1);
+        if (dot(ray.dir, bestHit.normal) > 0)
+            bestHit.normal = bestHit.normal * (-1);
         return bestHit;
+    }
+
+    static std::vector<Hit> orderHits(std::vector<Hit>& hits){
+        //Order hits by distance
+        for (int i = 0; i < hits.size(); i++) {
+            for (int j = i; j < hits.size(); j++) {
+                if (hits[i].t > hits[j].t) {
+                    Hit temp = hits[i];
+                    hits[i] = hits[j];
+                    hits[j] = temp;
+                }
+            }
+        }
+        return hits;
+    }
+
+    Hit secondIntersect(Ray ray){
+        std::vector<Hit> hits = std::vector<Hit>();
+        for (Intersectable * object : objects) {
+            Hit hit = object->intersect(ray); //  hit.t < 0 if no intersection
+            if (hit.t > 0)
+                hits.push_back(hit);
+        }
+        if (hits.empty())
+            return Hit();
+        if (hits.size() == 1)
+            return hits[0];
+        hits = orderHits(hits);
+        if (dot(ray.dir, hits[1].normal) > 0)
+            hits[1].normal = hits[1].normal * (-1);
+        return hits[1];
     }
 
     bool shadowIntersect(Ray ray) {	// for directional lights
@@ -238,13 +267,14 @@ public:
     }
 
     vec3 trace(Ray ray, int depth = 0) {
-        Hit hit = firstIntersect(ray);
-        if (hit.t < 0) return La;
-        vec3 outRadiance = hit.material->ka * La;
-        for (Light * light : lights) {
+        Hit hit = secondIntersect(ray);
+        if (hit.t < 0) return vec3(0,0,0);
+        float La = 0.2 * (1 + dot(hit.normal, ray.dir * (-1)));
+        vec3 outRadiance = vec3(La, La, La);
+        for (Light* light : lights) {
             Ray shadowRay(hit.position + hit.normal * epsilon, light->direction);
             float cosTheta = dot(hit.normal, light->direction);
-            if (cosTheta > 0 && !shadowIntersect(shadowRay)) {	// shadow computation
+            if (cosTheta > 0 && !shadowIntersect(shadowRay)) {
                 outRadiance = outRadiance + light->Le * hit.material->kd * cosTheta;
                 vec3 halfway = normalize(-ray.dir + light->direction);
                 float cosDelta = dot(hit.normal, halfway);
