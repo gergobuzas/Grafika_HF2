@@ -166,6 +166,56 @@ float rnd() { return (float)rand() / RAND_MAX; }
 
 const float epsilon = 0.0001f;
 
+void drawCube(std::vector<Intersectable*>& objects, Material* material){
+    //TODO create a cube with 12 triangles (2 per side) and add it to the list of objects (objects.push_back(...))
+    vec3 a = vec3(0, 0, 0);             //1
+    vec3 b = vec3(0, 0, 1.0f);          //2
+    vec3 c = vec3(0, 1.0f, 0);          //3
+    vec3 d = vec3(0, 1.0f, 1.0f);       //4
+    vec3 e = vec3(1.0f, 0, 0);          //5
+    vec3 f = vec3(1.0f, 0, 1.0f);       //6
+    vec3 g = vec3(1.0f, 1.0f, 0);       //7
+    vec3 h = vec3(1.0f, 1.0f, 1.0f);    //8
+    objects.push_back(new Triangle(a, g, e, material));
+    objects.push_back(new Triangle(a, c, g, material));
+    objects.push_back(new Triangle(a, d, c, material));
+    objects.push_back(new Triangle(a, b, d, material));
+    objects.push_back(new Triangle(c, h, g, material));
+    objects.push_back(new Triangle(c, d, h, material));
+    objects.push_back(new Triangle(e, g, h, material));
+    objects.push_back(new Triangle(e, h, f, material));
+    objects.push_back(new Triangle(a, e, f, material));
+    objects.push_back(new Triangle(a, f, b, material));
+    objects.push_back(new Triangle(b, f, h, material));
+    objects.push_back(new Triangle(b, h, d, material));
+}
+
+void drawOctahedron(std::vector<Intersectable*>& objects, Material* material){
+    vec3 transform = vec3(0.2f, 0.7f, 0);
+    vec3 a = vec3(0.2f, 0, 0) + transform;             //1
+    vec3 b = vec3(0, -0.2f, 0) + transform;          //2
+    vec3 c = vec3(-0.2f, 0, 0) + transform;          //3
+    vec3 d = vec3(0, 0.2f, 0) + transform;       //4
+    vec3 e = vec3(0, 0, 0.2f) + transform;          //5
+    vec3 f = vec3(0, 0, -0.2f) + transform;       //6
+    objects.push_back(new Triangle(b, a, e, material));
+    objects.push_back(new Triangle(c, b, e, material));
+    objects.push_back(new Triangle(d, c, e, material));
+    objects.push_back(new Triangle(a, d, e, material));
+    objects.push_back(new Triangle(a, b, f, material));
+    objects.push_back(new Triangle(b, c, f, material));
+    objects.push_back(new Triangle(c, d, f, material));
+    objects.push_back(new Triangle(d, a, f, material));
+}
+
+void drawIcosahedron(std::vector<Intersectable*>& objects, Material* material){
+    //TODO create an icosahedron with triangles and add it to the list of objects (objects.push_back(...))
+}
+
+void drawCone(std::vector<Intersectable*>& objects, Material* material){
+    //TODO create a cone with triangles and add it to the list of objects (objects.push_back(...))
+}
+
 class Scene {
     std::vector<Intersectable*> objects;
     std::vector<Light *> lights;
@@ -173,7 +223,7 @@ class Scene {
     vec3 La;
 public:
     void build() {
-        vec3 eye = vec3(1.9f, 1.2f, 2.2f), vup = vec3(0, 1.0f, 0), lookat = vec3(0, 0, 0);
+        vec3 eye = vec3(1.9f, 0.83f, 2.2f), vup = vec3(0, 1.0f, 0), lookat = vec3(0, 0.2f, 0);
         float fov = 45 * M_PI / 180;
         camera.set(eye, lookat, vup, fov);
 
@@ -183,28 +233,9 @@ public:
 
         vec3 kd(0.5f, 0.5f, 0.5f), ks(2, 2, 2);
         Material* material = new Material(kd, ks, 50);
+        drawCube(objects, material);
+        drawOctahedron(objects, material);
 
-        //TODO create a cube with 12 triangles (2 per side) and add it to the list of objects (objects.push_back(...))
-        vec3 a = vec3(0, 0, 0);             //1
-        vec3 b = vec3(0, 0, 1.0f);          //2
-        vec3 c = vec3(0, 1.0f, 0);          //3
-        vec3 d = vec3(0, 1.0f, 1.0f);       //4
-        vec3 e = vec3(1.0f, 0, 0);          //5
-        vec3 f = vec3(1.0f, 0, 1.0f);       //6
-        vec3 g = vec3(1.0f, 1.0f, 0);       //7
-        vec3 h = vec3(1.0f, 1.0f, 1.0f);    //8
-        objects.push_back(new Triangle(a, g, e, material));
-        objects.push_back(new Triangle(a, c, g, material));
-        objects.push_back(new Triangle(a, d, c, material));
-        objects.push_back(new Triangle(a, b, d, material));
-        objects.push_back(new Triangle(c, h, g, material));
-        objects.push_back(new Triangle(c, d, h, material));
-        objects.push_back(new Triangle(e, g, h, material));
-        objects.push_back(new Triangle(e, h, f, material));
-        objects.push_back(new Triangle(a, e, f, material));
-        objects.push_back(new Triangle(a, f, b, material));
-        objects.push_back(new Triangle(b, f, h, material));
-        objects.push_back(new Triangle(b, h, d, material));
 
     }
 
