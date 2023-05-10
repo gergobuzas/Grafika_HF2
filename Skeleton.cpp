@@ -210,75 +210,104 @@ void drawOctahedron(std::vector<Intersectable*>& objects, Material* material){
 void drawIcosahedron(std::vector<Intersectable*>& objects, Material* material){
     //TODO create an icosahedron with triangles and add it to the list of objects (objects.push_back(...))
     /*Here is the obj file:
-     * v  0  -0.525731  0.850651
-v  0.850651  0  0.525731
-v  0.850651  0  -0.525731
-v  -0.850651  0  -0.525731
-v  -0.850651  0  0.525731
-v  -0.525731  0.850651  0
-v  0.525731  0.850651  0
-v  0.525731  -0.850651  0
-v  -0.525731  -0.850651  0
-v  0  -0.525731  -0.850651
-v  0  0.525731  -0.850651
-v  0  0.525731  0.850651
+v 0.000000 -0.525731 0.850651
+v 0.850651 0.000000 0.525731
+v 0.850651 0.000000 -0.525731
+v -0.850651 0.000000 -0.525731
+v -0.850651 0.000000 0.525731
+v -0.525731 0.850651 0.000000
+v 0.525731 0.850651 0.000000
+v 0.525731 -0.850651 0.000000
+v -0.525731 -0.850651 0.000000
+v 0.000000 -0.525731 -0.850651
+v 0.000000 0.525731 -0.850651
+v 0.000000 0.525731 0.850651
 
-f  2  3  7
-f  2  8  3
-f  4  5  6
-f  5  4  9
-f  7  6  12
-f  6  7  11
-f  10  11  3
-f  11  10  4
-f  8  9  10
-f  9  8  1
+vn 0.934172 0.356822 0.000000
+vn 0.934172 -0.356822 0.000000
+vn -0.934172 0.356822 0.000000
+vn -0.934172 -0.356822 0.000000
+vn 0.000000 0.934172 0.356822
+vn 0.000000 0.934172 -0.356822
+vn 0.356822 0.000000 -0.934172
+vn -0.356822 0.000000 -0.934172
+vn 0.000000 -0.934172 -0.356822
+vn 0.000000 -0.934172 0.356822
+vn 0.356822 0.000000 0.934172
+vn -0.356822 0.000000 0.934172
+vn 0.577350 0.577350 -0.577350
+vn 0.577350 0.577350 0.577350
+vn -0.577350 0.577350 -0.577350
+vn -0.577350 0.577350 0.577350
+vn 0.577350 -0.577350 -0.577350
+vn 0.577350 -0.577350 0.577350
+vn -0.577350 -0.577350 -0.577350
+vn -0.577350 -0.577350 0.577350
 
-f  12  1  2
-f  1  12  5
-f  7  3  11
+f 2//1 3//1 7//1 --> means 2,3,7 are vertices of a triangle
+f 2//2 8//2 3//2 --> means 2,8,3 are vertices of a triangle
+f 4//3 5//3 6//3 --> means 4,5,6 are vertices of a triangle
+f 5//4 4//4 9//4 --> means 5,4,9 are vertices of a triangle
 
-f  2  7  12
-f  4  6  11
-f  6  5  12
-f  3  8  10
-f  8  2  1
-f  4  10  9
-f  5  9  1
+f 7//5 6//5 12//5 --> means 7,6,12 are vertices of a triangle
+f 6//6 7//6 11//6 --> means 6,7,11 are vertices of a triangle
+f 10//7 11//7 3//7 --> means 10,11,3 are vertices of a triangle
+f 11//8 10//8 4//8 --> means 11,10,4 are vertices of a triangle
+f 8//9 9//9 10//9 --> means 8,9,10 are vertices of a triangle
+f 9//10 8//10 1//10 --> means 9,8,1 are vertices of a triangle
+f 12//11 1//11 2//11 --> means 12,1,2 are vertices of a triangle
+f 1//12 12//12 5//12 --> means 1,12,5 are vertices of a triangle
+f 7//13 3//13 11//13 --> means 7,3,11 are vertices of a triangle
+f 2//14 7//14 12//14 --> means 2,7,12 are vertices of a triangle
+f 4//15 6//15 11//15 --> means 4,6,11 are vertices of a triangle
+f 6//16 5//16 12//16 --> means 6,5,12 are vertices of a triangle
+f 3//17 8//17 10//17 --> means 3,8,10 are vertices of a triangle
+f 8//18 2//18 1//18 --> means 8,2,1 are vertices of a triangle
+f 4//19 10//19 9//19 --> means 4,10,9 are vertices of a triangle
+f 5//20 9//20 1//20 --> means 5,9,1 are vertices of a triangle
      * */
-    vec3 transform = vec3(0.5f, 0.5f, 0.7f);
-    vec3 a = vec3(0, 0.525731, 0.850651) * 0.15f + transform;            //1
-    vec3 b = vec3(0.850651, 0, 0.525731)* 0.15f+ transform;          //2
-    vec3 c = vec3(0.850651, 0, -0.525731)* 0.15f+ transform;          //3
-    vec3 d = vec3(-0.850651, 0, -0.525731)* 0.15f+ transform;       //4
-    vec3 e = vec3(-0.850651, 0, 0.525731)* 0.15f+ transform;          //5
-    vec3 f = vec3(-0.525731, 0.850651, 0)* 0.15f+ transform;       //6
-    vec3 g = vec3(0.525731, 0.850651, 0)* 0.15f+ transform;       //7
-    vec3 h = vec3(0.525731, -0.850651, 0)* 0.15f+ transform;       //8
-    vec3 i = vec3(-0.525731, -0.850651, 0)* 0.15f+ transform;       //9
-    vec3 j = vec3(0, -0.525731, -0.850651)* 0.15f+ transform;       //10
-    vec3 k = vec3(0, 0.525731, -0.850651)* 0.15f+ transform;       //11
-    vec3 l = vec3(0, 0.525731, 0.850651)* 0.15f+ transform;       //12
+
+    vec3 transform = vec3(0.5f,0.5f,0.7f);
+    float scale = 0.15f;
+    vec3 a = vec3(0.000000, -0.525731, 0.850651) * scale + transform;             //1
+    vec3 b = vec3(0.850651, 0.000000, 0.525731) * scale + transform;          //2
+    vec3 c = vec3(0.850651, 0.000000, -0.525731) * scale + transform;         //3
+    vec3 d = vec3(-0.850651, 0.000000, -0.525731) * scale + transform;        //4
+    vec3 e = vec3(-0.850651, 0.000000, 0.525731) * scale + transform;         //5
+    vec3 f = vec3(-0.525731, 0.850651, 0.000000) * scale + transform;         //6
+    vec3 g = vec3(0.525731, 0.850651, 0.000000) * scale + transform;          //7
+    vec3 h = vec3(0.525731, -0.850651, 0.000000) * scale + transform;         //8
+    vec3 i = vec3(-0.525731, -0.850651, 0.000000) * scale + transform;        //9
+    vec3 j = vec3(0.000000, -0.525731, -0.850651) * scale + transform;        //10
+    vec3 k = vec3(0.000000, 0.525731, -0.850651) * scale + transform;         //11
+    vec3 l = vec3(0.000000, 0.525731, 0.850651) * scale + transform;          //12
+
     objects.push_back(new Triangle(b, c, g, material));
     objects.push_back(new Triangle(b, h, c, material));
     objects.push_back(new Triangle(d, e, f, material));
-    objects.push_back(new Triangle(e, d, i, material));
-    objects.push_back(new Triangle(g, f, l, material));
-    objects.push_back(new Triangle(f, g, k, material));
-    objects.push_back(new Triangle(j, k, c, material));
-    objects.push_back(new Triangle(k, j, d, material));
-    objects.push_back(new Triangle(h, i, j, material));
-    objects.push_back(new Triangle(i, h, a, material));
-    objects.push_back(new Triangle(l, a, b, material));
-    objects.push_back(new Triangle(a, l, e, material));
-    objects.push_back(new Triangle(g, c, k, material));
-    objects.push_back(new Triangle(b, g, l, material));
-    objects.push_back(new Triangle(d, f, k, material));
-    objects.push_back(new Triangle(f, e, l, material));
-    objects.push_back(new Triangle(c, h, j, material));
-    objects.push_back(new Triangle(h, b, a, material));
-    objects.push_back(new Triangle(d, j, i, material));
-    objects.push_back(new Triangle(e, i, a, material));
+    objects.push_back(new Triangle(e, d, i, material)); // 5-4-9
+    objects.push_back(new Triangle(g, f, l, material)); // 7-6-12
+    objects.push_back(new Triangle(f, g, k, material));  // 6-7-11
+    objects.push_back(new Triangle(j, k, c, material)); // 10-11-3
+    objects.push_back(new Triangle(k, j, d, material)); // 11-10-4
+    objects.push_back(new Triangle(h, i, j, material)); // 8-9-10
+    objects.push_back(new Triangle(i, h, a, material)); // 9-8-1
+    objects.push_back(new Triangle(l, a, b, material)); // 12-1-2
+    objects.push_back(new Triangle(a, l, e, material)); // 1-12-5
+    objects.push_back(new Triangle(g, c, k, material)); // 7-3-11
+    objects.push_back(new Triangle(b, g, l, material)); // 2-7-12
+    objects.push_back(new Triangle(d, f, k, material)); // 4-6-11
+    objects.push_back(new Triangle(f, e, l, material)); // 6-5-12
+    objects.push_back(new Triangle(c, h, j, material)); // 3-8-10
+    objects.push_back(new Triangle(h, b, a, material)); // 8-2-1
+    objects.push_back(new Triangle(d, j, i, material)); // 4-10-9
+    objects.push_back(new Triangle(e, i, a, material)); // 5-9-1
+
+
+
+
+
+
 
 }
 
