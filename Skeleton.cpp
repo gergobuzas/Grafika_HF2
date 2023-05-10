@@ -167,7 +167,6 @@ float rnd() { return (float)rand() / RAND_MAX; }
 const float epsilon = 0.0001f;
 
 void drawCube(std::vector<Intersectable*>& objects, Material* material){
-    //TODO create a cube with 12 triangles (2 per side) and add it to the list of objects (objects.push_back(...))
     vec3 a = vec3(0, 0, 0);             //1
     vec3 b = vec3(0, 0, 1.0f);          //2
     vec3 c = vec3(0, 1.0f, 0);          //3
@@ -210,6 +209,77 @@ void drawOctahedron(std::vector<Intersectable*>& objects, Material* material){
 
 void drawIcosahedron(std::vector<Intersectable*>& objects, Material* material){
     //TODO create an icosahedron with triangles and add it to the list of objects (objects.push_back(...))
+    /*Here is the obj file:
+     * v  0  -0.525731  0.850651
+v  0.850651  0  0.525731
+v  0.850651  0  -0.525731
+v  -0.850651  0  -0.525731
+v  -0.850651  0  0.525731
+v  -0.525731  0.850651  0
+v  0.525731  0.850651  0
+v  0.525731  -0.850651  0
+v  -0.525731  -0.850651  0
+v  0  -0.525731  -0.850651
+v  0  0.525731  -0.850651
+v  0  0.525731  0.850651
+
+f  2  3  7
+f  2  8  3
+f  4  5  6
+f  5  4  9
+f  7  6  12
+f  6  7  11
+f  10  11  3
+f  11  10  4
+f  8  9  10
+f  9  8  1
+
+f  12  1  2
+f  1  12  5
+f  7  3  11
+
+f  2  7  12
+f  4  6  11
+f  6  5  12
+f  3  8  10
+f  8  2  1
+f  4  10  9
+f  5  9  1
+     * */
+    vec3 transform = vec3(0.5f, 0.5f, 0.7f);
+    vec3 a = vec3(0, 0.525731, 0.850651) * 0.15f + transform;            //1
+    vec3 b = vec3(0.850651, 0, 0.525731)* 0.15f+ transform;          //2
+    vec3 c = vec3(0.850651, 0, -0.525731)* 0.15f+ transform;          //3
+    vec3 d = vec3(-0.850651, 0, -0.525731)* 0.15f+ transform;       //4
+    vec3 e = vec3(-0.850651, 0, 0.525731)* 0.15f+ transform;          //5
+    vec3 f = vec3(-0.525731, 0.850651, 0)* 0.15f+ transform;       //6
+    vec3 g = vec3(0.525731, 0.850651, 0)* 0.15f+ transform;       //7
+    vec3 h = vec3(0.525731, -0.850651, 0)* 0.15f+ transform;       //8
+    vec3 i = vec3(-0.525731, -0.850651, 0)* 0.15f+ transform;       //9
+    vec3 j = vec3(0, -0.525731, -0.850651)* 0.15f+ transform;       //10
+    vec3 k = vec3(0, 0.525731, -0.850651)* 0.15f+ transform;       //11
+    vec3 l = vec3(0, 0.525731, 0.850651)* 0.15f+ transform;       //12
+    objects.push_back(new Triangle(b, c, g, material));
+    objects.push_back(new Triangle(b, h, c, material));
+    objects.push_back(new Triangle(d, e, f, material));
+    objects.push_back(new Triangle(e, d, i, material));
+    objects.push_back(new Triangle(g, f, l, material));
+    objects.push_back(new Triangle(f, g, k, material));
+    objects.push_back(new Triangle(j, k, c, material));
+    objects.push_back(new Triangle(k, j, d, material));
+    objects.push_back(new Triangle(h, i, j, material));
+    objects.push_back(new Triangle(i, h, a, material));
+    objects.push_back(new Triangle(l, a, b, material));
+    objects.push_back(new Triangle(a, l, e, material));
+    objects.push_back(new Triangle(g, c, k, material));
+    objects.push_back(new Triangle(b, g, l, material));
+    objects.push_back(new Triangle(d, f, k, material));
+    objects.push_back(new Triangle(f, e, l, material));
+    objects.push_back(new Triangle(c, h, j, material));
+    objects.push_back(new Triangle(h, b, a, material));
+    objects.push_back(new Triangle(d, j, i, material));
+    objects.push_back(new Triangle(e, i, a, material));
+
 }
 
 void drawCone(std::vector<Intersectable*>& objects, Material* material){
@@ -235,7 +305,7 @@ public:
         Material* material = new Material(kd, ks, 50);
         drawCube(objects, material);
         drawOctahedron(objects, material);
-
+        drawIcosahedron(objects, material);
 
     }
 
