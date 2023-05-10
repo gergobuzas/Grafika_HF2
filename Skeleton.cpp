@@ -88,30 +88,36 @@ class Intersectable {
 };
 
 class Triangle : public Intersectable{
-    vec3 a, b, c;
+    vec3 a, b, c, normalVec;
     public:
         Triangle(vec3 _a, vec3 _b, vec3 _c, Material* _material) {
             a = _a; b = _b; c = _c; material = _material;
+            normalVec = cross((b - a), (c - a));
         }
         Hit intersect(const Ray& ray) {
             Hit hit;
             vec3 n = cross(b - a, c - a);
+            n = normalize(n);
             float t = dot(a - ray.start, n) / dot(ray.dir, n);  //ray parameter
             if (t < 0) return hit;
             vec3 p = ray.start + ray.dir * t; //intersection point
-            vec3 sikmetszes = (p - a) * n;
-            if ( dot(cross(b - a,p - a), n) > 0  &&
-            dot(cross(c - b,p - b), n) > 0  &&
-            dot(cross(a - c,p - c), n) > 0){
+            //vec3 sikmetszes = (p - a) * n;
+            float cond1 = dot(cross(b - a,p - a), n);
+            float cond2 = dot(cross(c - b,p - b), n);
+            float cond3 = dot(cross(a - c,p - c), n);
+            if (cond1 >= 0  && cond2 >= 0 && cond3 >= 0){
                 hit.t = t;
                 hit.position = p;
-                hit.normal = normalize(n);
+                hit.normal = n;
                 hit.material = material;
                 return hit;
             }
             return hit;
         }
 };
+
+
+
 
 class Cube : public Intersectable{
 
@@ -169,19 +175,60 @@ class Scene {
     vec3 La;
 public:
     void build() {
-        vec3 eye = vec3(0, 0, 2), vup = vec3(0, 1, 0), lookat = vec3(0, 0, 0);
+        vec3 eye = vec3(0, 0, 4.5f), vup = vec3(0, 1, 0), lookat = vec3(0, 0, 0);
         float fov = 45 * M_PI / 180;
         camera.set(eye, lookat, vup, fov);
 
         La = vec3(0.0f, 0.0f, 0.0f);
         vec3 lightDirection(1, 1, 1), Le(2, 2, 2);
-        //lights.push_back(new Light(lightDirection, Le));
+        lights.push_back(new Light(lightDirection, Le));
 
-        vec3 kd(0.3f, 0.2f, 0.1f), ks(2, 2, 2);
-        Material * material = new Material(kd, ks, 50);
+        vec3 kd(0.2f, 0.2f, 0.2f), ks(2, 2, 2);
+        Material* material = new Material(kd, ks, 50);
+
+        //TODO create a cube with 12 triangles (2 per side) and add it to the list of objects (objects.push_back(...))
+        vec3 a = vec3(-0.7, -0.7, -0.7);
+        vec3 b = vec3(-0.7, -0.7, 0.7);
+        vec3 c = vec3(-0.7, 0.7, -0.7);
+        vec3 d = vec3(-0.7, 0.7, 0.7);
+        vec3 e = vec3(0.7, -0.7, -0.7);
+        vec3 f = vec3(0.7, -0.7, 0.7);
+        vec3 g = vec3(0.7, 0.7, -0.7);
+        vec3 h = vec3(0.7, 0.7, 0.7);
+
+        objects.push_back(new Triangle(a, g, e, material));
+        objects.push_back(new Triangle(a, c, g, material));
+
+        objects.push_back(new Triangle(a, e, f, material));
+        objects.push_back(new Triangle(a, f, b, material));
+
+        objects.push_back(new Triangle(a, d, c, material));
+        objects.push_back(new Triangle(a, b, d, material));
+
+
+        objects.push_back(new Triangle(b, h, d, material));
+        objects.push_back(new Triangle(b, f, h, material));
+
+        objects.push_back(new Triangle(c, h, g, material));
+        objects.push_back(new Triangle(c, d, h, material));
+
+        objects.push_back(new Triangle(e, g, h, material));
+        objects.push_back(new Triangle(e, h, f, material));
+
+
+
+
+
+        //objects.push_back(new Triangle(vec3(1, 1, 0), vec3(1, 0, 0), vec3(0, 1, 0), material));
+
+
         //TODO create objects that are Platonic solids
         //for (int i = 0; i < 500; i++)
         //    objects.push_back(new Sphere(vec3(rnd() - 0.5f, rnd() - 0.5f, rnd() - 0.5f), rnd() * 0.1f, material));
+
+
+
+
     }
 
     void render(std::vector<vec4>& image) {
@@ -198,7 +245,8 @@ public:
         Hit bestHit;
         for (Intersectable * object : objects) {
             Hit hit = object->intersect(ray); //  hit.t < 0 if no intersection
-            if (hit.t > 0 && (bestHit.t < 0 || hit.t < bestHit.t))  bestHit = hit;
+            if (hit.t > 0 && (bestHit.t < 0 || hit.t < bestHit.t))
+                bestHit = hit;
         }
         if (dot(ray.dir, bestHit.normal) > 0) bestHit.normal = bestHit.normal * (-1);
         return bestHit;
