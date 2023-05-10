@@ -92,7 +92,7 @@ class Triangle : public Intersectable{
     public:
         Triangle(vec3 _a, vec3 _b, vec3 _c, Material* _material) {
             a = _a; b = _b; c = _c; material = _material;
-            normalVec = cross((b - a), (c - a));
+            normalVec = normalize(cross((b - a), (c - a)));
         }
         Hit intersect(const Ray& ray) {
             Hit hit;
@@ -115,8 +115,6 @@ class Triangle : public Intersectable{
             return hit;
         }
 };
-
-
 
 
 class Cube : public Intersectable{
@@ -175,7 +173,7 @@ class Scene {
     vec3 La;
 public:
     void build() {
-        vec3 eye = vec3(0, 0, 4.5f), vup = vec3(0, 1, 0), lookat = vec3(0, 0, 0);
+        vec3 eye = vec3(1.9f, 1.2f, 2.2f), vup = vec3(0, 1.0f, 0), lookat = vec3(0, 0, 0);
         float fov = 45 * M_PI / 180;
         camera.set(eye, lookat, vup, fov);
 
@@ -187,47 +185,27 @@ public:
         Material* material = new Material(kd, ks, 50);
 
         //TODO create a cube with 12 triangles (2 per side) and add it to the list of objects (objects.push_back(...))
-        vec3 a = vec3(-0.7, -0.7, -0.7);
-        vec3 b = vec3(-0.7, -0.7, 0.7);
-        vec3 c = vec3(-0.7, 0.7, -0.7);
-        vec3 d = vec3(-0.7, 0.7, 0.7);
-        vec3 e = vec3(0.7, -0.7, -0.7);
-        vec3 f = vec3(0.7, -0.7, 0.7);
-        vec3 g = vec3(0.7, 0.7, -0.7);
-        vec3 h = vec3(0.7, 0.7, 0.7);
+        vec3 a = vec3(0, 0, 0);             //1
+        vec3 b = vec3(0, 0, 1.0f);          //2
+        vec3 c = vec3(0, 1.0f, 0);          //3
+        vec3 d = vec3(0, 1.0f, 1.0f);       //4
+        vec3 e = vec3(1.0f, 0, 0);          //5
+        vec3 f = vec3(1.0f, 0, 1.0f);       //6
+        vec3 g = vec3(1.0f, 1.0f, 0);       //7
+        vec3 h = vec3(1.0f, 1.0f, 1.0f);    //8
 
         objects.push_back(new Triangle(a, g, e, material));
         objects.push_back(new Triangle(a, c, g, material));
-
-        objects.push_back(new Triangle(a, e, f, material));
-        objects.push_back(new Triangle(a, f, b, material));
-
         objects.push_back(new Triangle(a, d, c, material));
         objects.push_back(new Triangle(a, b, d, material));
-
-
-        objects.push_back(new Triangle(b, h, d, material));
-        objects.push_back(new Triangle(b, f, h, material));
-
         objects.push_back(new Triangle(c, h, g, material));
         objects.push_back(new Triangle(c, d, h, material));
-
         objects.push_back(new Triangle(e, g, h, material));
         objects.push_back(new Triangle(e, h, f, material));
-
-
-
-
-
-        //objects.push_back(new Triangle(vec3(1, 1, 0), vec3(1, 0, 0), vec3(0, 1, 0), material));
-
-
-        //TODO create objects that are Platonic solids
-        //for (int i = 0; i < 500; i++)
-        //    objects.push_back(new Sphere(vec3(rnd() - 0.5f, rnd() - 0.5f, rnd() - 0.5f), rnd() * 0.1f, material));
-
-
-
+        objects.push_back(new Triangle(a, e, f, material));
+        objects.push_back(new Triangle(a, f, b, material));
+        objects.push_back(new Triangle(b, f, h, material));
+        objects.push_back(new Triangle(b, h, d, material));
 
     }
 
@@ -242,9 +220,11 @@ public:
     }
 
     Hit firstIntersect(Ray ray) {
+        std::vector<Hit> hits;
         Hit bestHit;
         for (Intersectable * object : objects) {
             Hit hit = object->intersect(ray); //  hit.t < 0 if no intersection
+            hits.push_back(hit);
             if (hit.t > 0 && (bestHit.t < 0 || hit.t < bestHit.t))
                 bestHit = hit;
         }
@@ -317,11 +297,8 @@ void onInitialization() {
     long timeStart = glutGet(GLUT_ELAPSED_TIME);
     scene.render(image);
     long timeEnd = glutGet(GLUT_ELAPSED_TIME);
-    printf("Rendering time: %d milliseconds\n", (timeEnd - timeStart));
-
     // copy image to GPU as a texture
     fullScreenTexturedQuad = new FullScreenTexturedQuad(windowWidth, windowHeight, image);
-
     // create program for the GPU
     gpuProgram.create(vertexSource, fragmentSource, "fragmentColor");
 }
