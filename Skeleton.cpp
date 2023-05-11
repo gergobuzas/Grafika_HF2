@@ -116,25 +116,85 @@ class Triangle : public Intersectable{
         }
 };
 
-
-class Cube : public Intersectable{
-
-};
-
 class Cone : public Intersectable {
+public:
+    float height;
+    vec3 direction;
+    vec3 peakPoint; //csucspont
+    float alpha;
+
+    Cone(vec3 _peakPoint, vec3 _direction, Material* _material ,float angle, float _height) {
+        alpha = angle;
+        peakPoint = _peakPoint;
+        direction = normalize(_direction);
+        material = _material;
+        height = _height;
+    }
+
+    void moveCone(vec3 _peakPoint, vec3 _direction) {
+        peakPoint = _peakPoint;
+        direction = _direction;
+    }
+
+    Hit intersect(const Ray& ray) {
+        Hit hit;
+        vec3 n = direction;
+
+        float a, b, c;
+        a = dot(ray.dir, n) * dot(ray.dir, n) - dot(ray.dir, ray.dir) * cosf(alpha) * cosf(alpha);
+        b = 2 * (dot(ray.dir, n) * dot(ray.start - peakPoint, n) -
+                dot(ray.dir, ray.start - peakPoint) * cosf(alpha) * cosf(alpha));
+        c = dot(ray.start - peakPoint, n) * dot(ray.start - peakPoint, n) -
+                dot(ray.start - peakPoint, ray.start - peakPoint) * cosf(alpha) * cosf(alpha);
+        float d = b * b - 4 * a * c;
+        if (d < 0) return hit;
+        float t1 = (-b + sqrtf(d)) / (2 * a);
+        float t2 = (-b - sqrtf(d)) / (2 * a);
+        if (t1 < 0 && t2 < 0) return hit;
+        vec3 p1 = ray.start + ray.dir * t1;
+        vec3 p2 = ray.start + ray.dir * t2;
+        //Check if p2 is in the cone, but p1 is not
+        if (t1 < 0 && t2 > 0) {
+            if (dot(p2 - peakPoint, direction) < 0 || dot(p2 - peakPoint, direction) > height)
+                return hit;
+            hit.t = t2;
+            hit.position = p2;
+            hit.normal = normalize(p2 - peakPoint - direction * dot(p2 - peakPoint, direction));
+            hit.material = material;
+            return hit;
+        }
+        //Check if p1 is in the cone, but p2 is not
+        if (t2 < 0 && t1 > 0) {
+            if (dot(p1 - peakPoint, direction) < 0 || dot(p1 - peakPoint, direction) > height)
+                return hit;
+            hit.t = t1;
+            hit.position = p1;
+            hit.normal = normalize(p1 - peakPoint - direction * dot(p1 - peakPoint, direction));
+            hit.material = material;
+            return hit;
+        }
+        //Check if both p1 and p2 are in the cone
+        if (t1 > 0 && t2 > 0) {
+            if (dot(p1 - peakPoint, direction) < 0 || dot(p1 - peakPoint, direction) > height) {
+                if (dot(p2 - peakPoint, direction) < 0 || dot(p2 - peakPoint, direction) > height)
+                    return hit;
+                hit.t = t2;
+                hit.position = p2;
+                hit.normal = normalize(p2 - peakPoint - direction * dot(p2 - peakPoint, direction));
+                hit.material = material;
+                return hit;
+            }
+            hit.t = t1;
+            hit.position = p1;
+            hit.normal = normalize(p1 - peakPoint - direction * dot(p1 - peakPoint, direction));
+            hit.material = material;
+            return hit;
+        }
+        return hit;
+    }
 
 
 };
-
-class Octahedron : public Intersectable {
-
-};
-
-class Icosahedron : public Intersectable {
-
-};
-
-
 
 class Camera {
     vec3 eye, lookat, right, up;
@@ -246,15 +306,16 @@ void drawIcosahedron(std::vector<Intersectable*>& objects, Material* material){
 }
 
 void drawCone(std::vector<Intersectable*>& objects, Material* material){
-    //TODO create a cone with triangles and add it to the list of objects (objects.push_back(...))
+
 }
 
 class Scene {
+public:
     std::vector<Intersectable*> objects;
     std::vector<Light *> lights;
     Camera camera;
+    std::vector<Cone*> cones;
     vec3 La;
-public:
     void build() {
         vec3 eye = vec3(1.9f, 0.83f, 2.2f), vup = vec3(0, 1.0f, 0), lookat = vec3(0, 0.2f, 0);
         float fov = 45 * M_PI / 180;
@@ -262,7 +323,7 @@ public:
 
         La = vec3(0.2f, 0.2f, 0.2f);
         vec3 lightDirection(-1, 1, 1), Le(2, 2, 2);
-        lights.push_back(new Light(lightDirection, Le));
+        //lights.push_back(new Light(lightDirection, Le));
 
         vec3 kd(0.5f, 0.5f, 0.5f), ks(2, 2, 2);
         Material* material = new Material(kd, ks, 50);
@@ -270,6 +331,19 @@ public:
         drawOctahedron(objects, material);
         drawIcosahedron(objects, material);
 
+        //drawCones here
+        Hit pos1 = secondIntersect(camera.getRay(350,150));
+        Cone* cone1 = new Cone(pos1.position, pos1.normal, material, 0.3f, 0.15f);
+        Hit pos2 = secondIntersect(camera.getRay(150,250));
+        Cone* cone2 = new Cone(pos2.position, pos2.normal, material, 0.3f, 0.15f);
+        Hit pos3 = secondIntersect(camera.getRay(400,400));
+        Cone* cone3 = new Cone(pos3.position, pos3.normal, material, 0.3f, 0.15f);
+        cones.push_back(cone1);
+        cones.push_back(cone2);
+        cones.push_back(cone3);
+        for (int i = 0; i < cones.size(); ++i) {
+            objects.push_back(cones[i]);
+        }
     }
 
     void render(std::vector<vec4>& image) {
@@ -333,7 +407,10 @@ public:
     vec3 trace(Ray ray, int depth = 0) {
         Hit hit = secondIntersect(ray);
         if (hit.t < 0) return vec3(0,0,0);
-        float La = 0.2 * (1 + dot(hit.normal, ray.dir * (-1)));
+        float a = dot(hit.normal, ray.dir * (-1));
+        if (a < 0)
+            a = 0;
+        float La = 0.2 * (1 + a);
         vec3 outRadiance = vec3(La, La, La);
         for (Light* light : lights) {
             Ray shadowRay(hit.position + hit.normal * epsilon, light->direction);
@@ -381,13 +458,13 @@ public:
 };
 
 FullScreenTexturedQuad * fullScreenTexturedQuad;
-
+std::vector<vec4> image(windowWidth * windowHeight);
 // Initialization, create an OpenGL context
 void onInitialization() {
     glViewport(0, 0, windowWidth, windowHeight);
     scene.build();
 
-    std::vector<vec4> image(windowWidth * windowHeight);
+
     long timeStart = glutGet(GLUT_ELAPSED_TIME);
     scene.render(image);
     long timeEnd = glutGet(GLUT_ELAPSED_TIME);
@@ -414,6 +491,23 @@ void onKeyboardUp(unsigned char key, int pX, int pY) {
 
 // Mouse click event
 void onMouse(int button, int state, int pX, int pY) {
+    pY = 1 - pY + windowWidth;
+    if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {  // GLUT_LEFT_BUTTON / GLUT_RIGHT_BUTTON and GLUT_DOWN / GLUT_UP
+        Hit hit = scene.secondIntersect(scene.camera.getRay(pX, pY));
+        Cone* closestCone;
+        float minDistance = 100000000.0f;
+        for (int i = 0; i < scene.cones.size(); ++i) {
+            vec3 point = scene.cones[i]->peakPoint;
+            if (fabs(length(point - hit.position)) < minDistance) {
+                minDistance = length(point - hit.position);
+                closestCone = scene.cones[i];
+            }
+        }
+        closestCone->moveCone(hit.position, hit.normal);
+        scene.render(image);
+        fullScreenTexturedQuad = new FullScreenTexturedQuad(windowWidth, windowHeight, image);
+    }
+    glutPostRedisplay();
 }
 
 // Move mouse with key pressed
