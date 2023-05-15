@@ -30,6 +30,9 @@
 // a sajat kontribucioba, igy a feladat elfogadasarol a tobbi resz mennyisege es minosege alapjan szuletik dontes.
 // Tudomasul veszem, hogy a forrasmegjeloles kotelmenek megsertese eseten a hazifeladatra adhato pontokat
 // negativ elojellel szamoljak el es ezzel parhuzamosan eljaras is indul velem szemben.
+//
+//
+// A feladat megoldasahoz az eloadasdiakat es a kiadott segedanyagokat hasznaltam fel
 //=============================================================================================
 #include "framework.h"
 
@@ -403,6 +406,7 @@ public:
         for (Intersectable * object : objects) if (object->intersect(ray).t > 0) return true;
         return false;
     }
+
 
     vec3 trace(Ray ray, int depth = 0) {
         Hit hit = secondIntersect(ray);
