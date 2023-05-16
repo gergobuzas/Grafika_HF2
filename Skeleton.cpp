@@ -336,7 +336,7 @@ public:
         //drawCones here
         Hit pos1 = secondIntersect(camera.getRay(350,150));
         Cone* cone1 = new Cone(pos1.position, pos1.normal, material, 0.3f, 0.15f);
-        Hit pos2 = secondIntersect(camera.getRay(150,250));
+        Hit pos2 = secondIntersect(camera.getRay(132,381));
         Cone* cone2 = new Cone(pos2.position, pos2.normal, material, 0.3f, 0.15f);
         Hit pos3 = secondIntersect(camera.getRay(400,400));
         Cone* cone3 = new Cone(pos3.position, pos3.normal, material, 0.3f, 0.15f);
