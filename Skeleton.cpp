@@ -275,8 +275,8 @@ void drawOctahedron(std::vector<Intersectable*>& objects, Material* material){
 }
 
 void drawIcosahedron(std::vector<Intersectable*>& objects, Material* material){
-    vec3 transform = vec3(0.5f,0.5f,0.7f);
-    float scale = 0.15f;
+    vec3 transform = vec3(0.5f,0.35f,0.7f);
+    float scale = 0.25f;
     vec3 a = vec3(0.000000, -0.525731, 0.850651) * scale + transform;             //1
     vec3 b = vec3(0.850651, 0.000000, 0.525731) * scale + transform;          //2
     vec3 c = vec3(0.850651, 0.000000, -0.525731) * scale + transform;         //3
@@ -338,7 +338,7 @@ public:
         Cone* cone1 = new Cone(pos1.position, pos1.normal, material, 0.3f, 0.15f);
         Hit pos2 = secondIntersect(camera.getRay(132,381));
         Cone* cone2 = new Cone(pos2.position, pos2.normal, material, 0.3f, 0.15f);
-        Hit pos3 = secondIntersect(camera.getRay(400,400));
+        Hit pos3 = secondIntersect(camera.getRay(475,390));
         Cone* cone3 = new Cone(pos3.position, pos3.normal, material, 0.3f, 0.15f);
         cones.push_back(cone1);
         cones.push_back(cone2);
