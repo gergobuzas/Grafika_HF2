@@ -32,7 +32,7 @@
 // negativ elojellel szamoljak el es ezzel parhuzamosan eljaras is indul velem szemben.
 //
 //
-// A feladat megoldasahoz az eloadasdiakat es a kiadott segedanyagokat hasznaltam fel
+// A feladat megoldasahoz az eloadas-diakat, es a kiadott segedanyagokat hasznaltam fel
 //=============================================================================================
 #include "framework.h"
 
@@ -64,6 +64,8 @@ const char *fragmentSource = R"(
 	}
 )";
 
+const float epsilon = 0.005f;
+
 struct Ray {
     vec3 start, dir;
     Ray(vec3 _start, vec3 _dir) { start = _start; dir = normalize(_dir); }
@@ -88,6 +90,20 @@ class Intersectable {
         Material * material;
     public:
         virtual Hit intersect(const Ray& ray) = 0;
+};
+
+struct Light {
+    vec3 position;
+    vec3 Le;
+    Light(vec3 _position, vec3 _Le) {
+        position = _position;
+        Le = _Le;
+    }
+
+    void move(vec3 _position) {
+        position = _position;
+                            //itt volt minusz is
+    }
 };
 
 class Triangle : public Intersectable{
@@ -134,9 +150,10 @@ public:
         height = _height;
     }
 
-    void moveCone(vec3 _peakPoint, vec3 _direction) {
+    void moveCone(vec3 _peakPoint, vec3 _direction, Light* _light) {
         peakPoint = _peakPoint;
-        direction = _direction;
+        direction = normalize(_direction);
+        _light->move(_peakPoint + direction * epsilon);
     }
 
     Hit intersect(const Ray& ray) {
@@ -215,19 +232,6 @@ class Camera {
             return Ray(eye, dir);
         }
 };
-
-struct Light {
-    vec3 direction;
-    vec3 Le;
-    Light(vec3 _direction, vec3 _Le) {
-        direction = normalize(_direction);
-        Le = _Le;
-    }
-};
-
-float rnd() { return (float)rand() / RAND_MAX; }
-
-const float epsilon = 0.0001f;
 
 void drawCube(std::vector<Intersectable*>& objects, Material* material){
     vec3 a = vec3(0, 0, 0);             //1
@@ -308,9 +312,6 @@ void drawIcosahedron(std::vector<Intersectable*>& objects, Material* material){
     objects.push_back(new Triangle(e, i, a, material)); // 5-9-1
 }
 
-void drawCone(std::vector<Intersectable*>& objects, Material* material){
-
-}
 
 class Scene {
 public:
@@ -325,11 +326,9 @@ public:
         camera.set(eye, lookat, vup, fov);
 
         La = vec3(0.2f, 0.2f, 0.2f);
-        vec3 lightDirection(-1, 1, 1), Le(2, 2, 2);
-        //lights.push_back(new Light(lightDirection, Le));
 
         vec3 kd(0.5f, 0.5f, 0.5f), ks(2, 2, 2);
-        Material* material = new Material(kd, ks, 50);
+        auto* material = new Material(kd, ks, 50);
         drawCube(objects, material);
         drawOctahedron(objects, material);
         drawIcosahedron(objects, material);
@@ -344,9 +343,24 @@ public:
         cones.push_back(cone1);
         cones.push_back(cone2);
         cones.push_back(cone3);
-        for (int i = 0; i < cones.size(); ++i) {
-            objects.push_back(cones[i]);
+        for (auto & cone : cones) {
+            objects.push_back(cone);
         }
+
+        vec3 redLight(1, 0, 0);
+        vec3 blueLight(0, 0, 1);
+        vec3 greenLight(0, 1, 0);                      //itt volt minuszos is
+        auto* coneLight1 = new Light(cones[0]->peakPoint + cones[0]->direction * epsilon, redLight);
+        auto* coneLight2 = new Light(cones[1]->peakPoint + cones[1]->peakPoint * epsilon, blueLight);
+        auto* coneLight3 = new Light(cones[2]->peakPoint + cones[2]->direction * epsilon, greenLight);
+
+        coneLight1->move(cones[0]->peakPoint + cones[0]->direction * epsilon);
+        coneLight2->move(cones[1]->peakPoint + cones[1]->direction * epsilon);
+        coneLight3->move(cones[2]->peakPoint + cones[2]->direction * epsilon);
+
+        lights.push_back(coneLight1);
+        lights.push_back(coneLight2);
+        lights.push_back(coneLight3);
     }
 
     void render(std::vector<vec4>& image) {
@@ -357,18 +371,6 @@ public:
                 image[Y * windowWidth + X] = vec4(color.x, color.y, color.z, 1);
             }
         }
-    }
-
-    Hit firstIntersect(Ray ray) {
-        Hit bestHit;
-        for (Intersectable * object : objects) {
-            Hit hit = object->intersect(ray); //  hit.t < 0 if no intersection
-            if (hit.t > 0 && (bestHit.t < 0 || hit.t < bestHit.t))
-                bestHit = hit;
-        }
-        if (dot(ray.dir, bestHit.normal) > 0)
-            bestHit.normal = bestHit.normal * (-1);
-        return bestHit;
     }
 
     static std::vector<Hit> orderHits(std::vector<Hit>& hits){
@@ -402,28 +404,33 @@ public:
         return hits[1];
     }
 
-    bool shadowIntersect(Ray ray) {	// for directional lights
-        for (Intersectable * object : objects) if (object->intersect(ray).t > 0) return true;
+    bool shadowIntersect(Ray ray, vec3 lightPosition) {	// for point light source only!
+        for (Intersectable * object : objects)
+            if (object->intersect(ray).t > 0){
+                float distance = length(ray.start - lightPosition);
+                if (length(ray.start - object->intersect(ray).position) < distance)
+                    return true;
+            }
         return false;
     }
 
 
     vec3 trace(Ray ray, int depth = 0) {
         Hit hit = secondIntersect(ray);
-        if (hit.t < 0) return vec3(0,0,0);
+        if (hit.t < 0)
+            return vec3(0,0,0);
         float a = dot(hit.normal, ray.dir * (-1));
         if (a < 0)
             a = 0;
-        float La = 0.2 * (1 + a);
-        vec3 outRadiance = vec3(La, La, La);
+        float ambientLight = 0.2f * (1 + a);
+        vec3 outRadiance = vec3(ambientLight, ambientLight, ambientLight);
         for (Light* light : lights) {
-            Ray shadowRay(hit.position + hit.normal * epsilon, light->direction);
-            float cosTheta = dot(hit.normal, light->direction);
-            if (cosTheta > 0 && !shadowIntersect(shadowRay)) {
-                outRadiance = outRadiance + light->Le * hit.material->kd * cosTheta;
-                vec3 halfway = normalize(-ray.dir + light->direction);
-                float cosDelta = dot(hit.normal, halfway);
-                if (cosDelta > 0) outRadiance = outRadiance + light->Le * hit.material->ks * powf(cosDelta, hit.material->shininess);
+            vec3 direction = normalize(light->position - hit.position);
+            Ray shadowRay(hit.position + direction * epsilon, direction);
+            float cosTheta = dot(hit.normal, direction);
+            if (cosTheta > 0 && !shadowIntersect(shadowRay, light->position)) {
+                outRadiance = outRadiance + (light->Le/pow(length(light->position - hit.position), 2))
+                        * hit.material->kd * cosTheta;
             }
         }
         return outRadiance;
@@ -463,25 +470,19 @@ public:
 
 FullScreenTexturedQuad * fullScreenTexturedQuad;
 std::vector<vec4> image(windowWidth * windowHeight);
-// Initialization, create an OpenGL context
+
 void onInitialization() {
     glViewport(0, 0, windowWidth, windowHeight);
     scene.build();
-
-
-    long timeStart = glutGet(GLUT_ELAPSED_TIME);
     scene.render(image);
-    long timeEnd = glutGet(GLUT_ELAPSED_TIME);
-    // copy image to GPU as a texture
     fullScreenTexturedQuad = new FullScreenTexturedQuad(windowWidth, windowHeight, image);
-    // create program for the GPU
     gpuProgram.create(vertexSource, fragmentSource, "fragmentColor");
 }
 
-// Window has become invalid: Redraw
+
 void onDisplay() {
     fullScreenTexturedQuad->Draw();
-    glutSwapBuffers();									// exchange the two buffers
+    glutSwapBuffers();
 }
 
 // Key of ASCII code pressed
@@ -496,18 +497,20 @@ void onKeyboardUp(unsigned char key, int pX, int pY) {
 // Mouse click event
 void onMouse(int button, int state, int pX, int pY) {
     pY = 1 - pY + windowWidth;
-    if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {  // GLUT_LEFT_BUTTON / GLUT_RIGHT_BUTTON and GLUT_DOWN / GLUT_UP
+    if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
         Hit hit = scene.secondIntersect(scene.camera.getRay(pX, pY));
         Cone* closestCone;
+        int coneIndex;
         float minDistance = 100000000.0f;
         for (int i = 0; i < scene.cones.size(); ++i) {
             vec3 point = scene.cones[i]->peakPoint;
             if (fabs(length(point - hit.position)) < minDistance) {
                 minDistance = length(point - hit.position);
                 closestCone = scene.cones[i];
+                coneIndex = i;
             }
         }
-        closestCone->moveCone(hit.position, hit.normal);
+        closestCone->moveCone(hit.position, hit.normal, scene.lights[coneIndex]);
         scene.render(image);
         fullScreenTexturedQuad = new FullScreenTexturedQuad(windowWidth, windowHeight, image);
     }
